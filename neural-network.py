@@ -6,12 +6,6 @@ def backpropagation():
   # Something here
   return # something here
 
-def compute_gradient(X, func):
-  """
-  """
-  # Something here
-  return # something here
-
 def pool_layer(X, pool_size=2):
   """
   The pooling layer of a neural network. This takes in an array of arbitrary
@@ -45,7 +39,7 @@ def pool_layer(X, pool_size=2):
   """
 
   num_dims = len(X.shape)
-  # initialization of pool array by first initialization the shape of the
+  # initialization of the pool array by first initializating the shape of the
   # array.
   pool_shape = ()
   for i in range(num_dims - 2):
@@ -113,17 +107,17 @@ def ADAM(learn_rate, beta1=0.9, beta2=0.999,
   Further, it requires a compute gradient function to be called.
   """
   moment1 = np.zeros_like(theta) # initialize 1st moment vector
-	moment2 = np.zeros_like(theta) # initialize 2nd moment vector
-	t = 0 # initialize timestep
-	for i in range(iterations):
+  moment2 = np.zeros_like(theta) # initialize 2nd moment vector
+  t = 0 # initialize timestep
+  for i in range(iterations):
     t += 1
-		grad = compute_gradient(func, theta)
-		moment1 = beta1 * moment1 + (1 - beta1) * grad 
-		moment2 = beta2 * moment2 + (1 - beta2) * grad * grad 
-		moment1hat = moment1 / (1 - beta1 ** t)
-		moment2hat = moment2 / (1 - beta2 ** t)
-		theta = theta - learn_rate * moment1hat / (np.sqrt(moment2hat) + epsilon)
-	return theta
+    grad = compute_gradient(func, theta)
+    moment1 = beta1 * moment1 + (1 - beta1) * grad 
+    moment2 = beta2 * moment2 + (1 - beta2) * grad * grad 
+    moment1hat = moment1 / (1 - beta1 ** t)
+    moment2hat = moment2 / (1 - beta2 ** t)
+    theta = theta - learn_rate * moment1hat / (np.sqrt(moment2hat) + epsilon)
+  return theta
 
 def ReLU(X):
   """
@@ -160,45 +154,78 @@ def ReLU(X):
   return np.maximum(zeros, X)
 
 def ReLUgrad(X):
-  return # gradient goes here
+  grad = (X > 0)
+  grad = grad.astype(float)
+  return grad
 
-def conv2dlayer(X, step_size=1, filter_size=3):
-	conv_array = np.empty_like(X)
-	padded = pad(X, step_size)
-	filter = create_filter(filter_size, filter_size)
-	for i in range(X.shape[1]):
-		for j in range(X.shape[2]):
-			conv_array[i, j] = np.dot(padded[i:3+i, j:3+j], filter)
-	return conv_array 
+def conv_layer(X, step_size=1, filter_arr):
+  # Change so that it can take in larger sizes. I want to make it so that this
+  # detects the number of color channels that the picture has.
+  conv_array = np.empty_like(X)
+  padded = pad(X, step_size)
+  m = filter_arr.shape
+  for i in range(X.shape[1]):
+    for j in range(X.shape[2]):
+      conv_array[...i, j] = np.tensordot(padded[...,
+                                                i:m[0]+i,
+                                                j:m[1]+j],
+                                                filter_arr)
+  return conv_array 
 
-def conv2dgrad(X, filter):
+def conv_grad(X, filter):
 	
-
-
-# X can be any sized ndarray, e.g. a (3, 2, 2, 5) ndarray will become
-# pad six 2 x 5 matrices.
 def pad(X, pad_size=1):
-	pad_array = np.empty_like(X)
-	pad_array = X.copy()
+  pad_array = X.copy()
 
-	# Initializing the padding matrix
-	zero_col_shape = ()
-	for i in range(len(X.shape) - 1):
-		zero_col_shape = zero_col_shape + (X.shape[i], )
-	zero_col_shape = zero_col_shape + (1,) 
-	zero_col = np.zeros(zero_col_shape)
-	
-	# Left and right append
-	for i in range(pad_size):
-		pad_array = np.c_[zero_col, pad_array, zero_col]
-	
-	ncols = pad_array.shape[1]
-	zero_row = np.zeros((1, ncols))
+  # Initializing the padding matrix
+  zero_col_shape = ()
+  for i in range(len(X.shape) - 1):
+    zero_col_shape = zero_col_shape + (X.shape[i], )
+  zero_col_shape = zero_col_shape + (1,) 
+  zero_col = np.zeros(zero_col_shape)
+  
+  # Left and right append
+  for i in range(pad_size):
+    pad_array = np.c_[zero_col, pad_array, zero_col]
+  
+  zero_row_shape = ()
+  n = len(pad_array.shape) - 1
+  for i in range(n - 1):
+    zero_row_shape = zero_row_shape + (pad_array.shape[i], )
+  zero_row_shape = zero_row_shape + (1, )
+  zero_row_shape = zero_row_shape + (pad_array.shape[n], )
+  zero_row = np.zeros(zero_row_shape)
 
-	# Top and bottom append
-	for i in range(pad_size):	
-		pad_array = np.r_[zero_row, pad_array, zero_row]
-	return pad_array
+  # Top and bottom append
+  for i in range(pad_size):	
+    pad_array = np.r_['-2', zero_row, pad_array, zero_row]
+  return pad_array
 
 def create_filter(filter_size1=3, filter_size2=3):
-	return np.random.randn(filter_size1, filter_size2) 
+  return np.random.randn(filter_size1, filter_size2)
+
+def xav_init(nd_arr_shape, n):
+  """
+  This is the recommended initalization of Xavier Glorot and Yoshua Bengio. The
+  bibtex reference is as follows:
+  @INPROCEEDINGS{Glorot10understandingthe,
+    author = {Xavier Glorot and Yoshua Bengio},
+    title = {Understanding the difficulty of training deep feedforward neural
+    networks},
+    booktitle = {In Proceedings of the International Conference on Artifical
+    Intelligence and Statistics (AISTATS'10). Society for Artificial
+    Intelligence and Statistics},
+    year = {2010}
+  }
+  """
+  # n should be the number of columns in the previous layer
+  xav_arr = np.empty(nd_arr_shape)
+  xav_arr = np.random.uniform(-1 / np.sqrt(n), 1 / np.sqrt(n), nd_arr_shape)
+  return xav_arr
+
+  # Code for mini-batch
+  # import time
+  # from tqdm import tqdm
+  # for i in tqdm(range(10)):
+  #   code to run
+  # This shows how much time and the estimated time the operations will take
