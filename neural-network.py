@@ -158,22 +158,29 @@ def ReLUgrad(X):
   grad = grad.astype(float)
   return grad
 
-def conv_layer(X, step_size=1, filter_arr):
+def softmax(X):
+  return np.exp(X) / np.sum(np.exp(X))
+
+def softmax_grad(X):
+  
+def conv_layer(X, filter_arr, step_size=1):
   # Change so that it can take in larger sizes. I want to make it so that this
   # detects the number of color channels that the picture has.
   conv_array = np.empty_like(X)
   padded = pad(X, step_size)
   m = filter_arr.shape
-  for i in range(X.shape[1]):
-    for j in range(X.shape[2]):
-      conv_array[...i, j] = np.tensordot(padded[...,
-                                                i:m[0]+i,
-                                                j:m[1]+j],
-                                                filter_arr)
+  for i in range(X.shape[-2]):
+    for j in range(X.shape[-1]):
+      conv_array[...,i , j] = np.tensordot(padded[...,
+                                                  i:m[-2]+i,
+                                                  j:m[-1]+j],
+                                                  filter_arr)
   return conv_array 
 
-def conv_grad(X, filter):
-	
+def conv_grad(X, filter_arr):
+  #some code
+  return #some code
+
 def pad(X, pad_size=1):
   pad_array = X.copy()
 
