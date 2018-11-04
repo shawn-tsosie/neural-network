@@ -159,27 +159,75 @@ def ReLUgrad(X):
   return grad
 
 def softmax(X):
+  X -= np.max(X)
   return np.exp(X) / np.sum(np.exp(X))
 
 def softmax_grad(X):
-  
-def conv_layer(X, filter_arr, step_size=1):
+  sm = softmax(X)
+  grad = np.zeros(X)
+  for i in range(X.shape[-1]):
+    for j in range(X.shape[-2]):
+      if i == j:
+        grad[...,i,j] = softmax[i] * (1 - softmax[j])
+      else:
+        grad[...,i,j] = -softmax[i] * softmax[j]
+  return grad
+
+def conv_layer1(X, filter_arr, step_size=1):
   # Change so that it can take in larger sizes. I want to make it so that this
   # detects the number of color channels that the picture has.
   conv_array = np.empty_like(X)
   padded = pad(X, step_size)
-  m = filter_arr.shape
-  for i in range(X.shape[-2]):
-    for j in range(X.shape[-1]):
-      conv_array[...,i , j] = np.tensordot(padded[...,
-                                                  i:m[-2]+i,
-                                                  j:m[-1]+j],
-                                                  filter_arr)
+  m = X.shape
+  n = filter_arr.shape
+  for i in range(m[0]):
+    for j in range(m[1]):
+        for k in range(m[2]):
+          for l in range(m[3]):
+            conv_array[i,j,k,l] = np.vdot(padded[i,j,k:n[-2]+k,l:n[-1]+l],
+                                    filter_arr)
   return conv_array 
 
+def conv_layer_filt(X, filter_arr, step_size=1):
+  convolutional = conv_layer(X, filter_arr[0], step_size)
+  m = filter_arr.shape
+  for i in range(m[0]-1):
+    convolutional = np.concatenate((convolutional,
+                                    conv_layer(X, filter_arr[i+1], step_size)),
+                                    axis=1)
+  return convolutional
+
+def conv_layer2(X, filter_arr, step_size=1):
+    m = X.shape
+    conv_array = np.empty(m[0],1,m[2],m[3])
+    padded = pad(X, step_size)
+    n = filter_arr.shape
+    for i in range(m[0]):
+        for j in range(m[2]):
+            for k in range(m[3]):
+                conv_array[i,0,j,k] = np.vdot(padded[i,:,j:n[-2]+j,k:n[-1]+k],
+                                              filter_arr)
+    return conv_array
+
+def conv_layer_filt2(X, filter_arr, step_size=1):
+  convolutional = conv_layer2(X, filter_arr[0], step_size)
+  m = filter_arr.shape
+  for i in range(m[0]-1):
+    convolutional = np.concatenate((convolutional,
+                                    conv_layer2(X, filter_arr[i+1],
+                                    step_size)),
+                                    axis=1)
+  return convolutional
+
 def conv_grad(X, filter_arr):
-  #some code
-  return #some code
+  m = filter_arr.shape
+  n = X.shape
+  grad = np.zeros(X.shape)
+  for i in range(n[-1]):
+    for j in range(n[-2]):
+      if i in range(k,k+3) and j in range(l:l+3):
+        grad[...,i,j] = X[...,i,j]
+  return grad
 
 def pad(X, pad_size=1):
   pad_array = X.copy()
@@ -230,9 +278,27 @@ def xav_init(nd_arr_shape, n):
   xav_arr = np.random.uniform(-1 / np.sqrt(n), 1 / np.sqrt(n), nd_arr_shape)
   return xav_arr
 
+def one_hot_encode(y, num_classes):
+  # This may not be necessary
+  encoding = np.zeros((y.shape[0], num_classes))
+  for i in range(y.shape[0]):
+    encoding[i,y[i]] = 1
+  return encoding
+
+def cross_entropy(X, Y):
+  """
+  This code is from https://deepnotes.io/softmax-crossentropy
+  Retrieval date: 2018-11-02
+  """
+  m = Y.shape[0]
+  p = softmax(X)
+  log_likelihood = -np.log(p[range(m),Y])
+  loss = np.sum(log_likelihood) / m
+  return loss
+
   # Code for mini-batch
   # import time
   # from tqdm import tqdm
   # for i in tqdm(range(10)):
   #   code to run
-  # This shows how much time and the estimated time the operations will take
+  # This shows how much time and the estimated time the operations will take 
