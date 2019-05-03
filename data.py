@@ -1,5 +1,6 @@
 import torch
-import layers
+
+from neural_network import *
 
 
 class Data():
