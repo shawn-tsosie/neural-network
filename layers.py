@@ -82,7 +82,7 @@ class ConvLayer(Layer):
     def forward(self, input):
         pass
 
-    def backward(self, lr, optimizer):
+    def backward(self, lr, optimizer=None):
         pass
 
     def initialize(self):
@@ -103,4 +103,5 @@ if __name__ == '__main__':
     test.backward(0.03)
     assert test.weights.shape == test.weight_grad.shape
     print('Testing finished.')
+    # ADD XOR test.
 
