@@ -41,7 +41,7 @@ class Layer(object):
 class FCLayer(Layer):
 
     def __init__(self, in_dims, out_dims, activation, has_bias=True):
-        super(FCLayer, self).__init__(in_dims, out_dims,
+        super().__init__(in_dims, out_dims,
                                       activation, has_bias=True)
 
     def backward(self, lr, optimizer=None):
@@ -72,7 +72,7 @@ class ConvLayer(Layer):
 
     def __init__(self, in_dims, out_dims, activation,
                  kernel_size=3, channels=1, has_bias=True):
-        super(FCLayer, self).__init__(in_dims, out_dims,
+        super().__init__(in_dims, out_dims,
                                       activation, has_bias=True)
         self.kernel = torch.zeros(channels, kernel_size, kernel_size)
 
