@@ -10,14 +10,14 @@ class Activation():
         self.activation = activation
         self.derivative = derivative
 
-    def __call__(self, input):
-        return self.forward(input)
+    def __call__(self, tensor):
+        return self.forward(tensor)
 
-    def forward(self, input):
-        return self.activation(input)
+    def forward(self, tensor):
+        return self.activation(tensor)
 
-    def backward(self, input):
-        return self.derivative(input)
+    def backward(self, tensor):
+        return self.derivative(tensor)
 
 
 class ReLU(Activation):

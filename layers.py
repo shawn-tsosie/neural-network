@@ -4,7 +4,7 @@ import torch
 
 class Layer(object):
 
-    def __init__(self, in_dims, out_dims, activation, has_bias=True):
+    def __init__(self, in_dims, out_dims, activation, input, has_bias=True):
         self.weights = torch.randn(out_dims, in_dims).cuda()
         self.weight_grad = torch.randn(self.weights.shape).cuda()
         self.w_shape = self.weights.shape
@@ -13,6 +13,7 @@ class Layer(object):
         self.b_shape = self.bias.shape if has_bias else None
         self.has_bias = has_bias
         self.activation = activation
+        self.input = input
 
     def __call__(self, input):
         return self.forward(input)
@@ -41,27 +42,26 @@ class Layer(object):
 class FCLayer(Layer):
 
     def __init__(self, in_dims, out_dims, activation, has_bias=True):
-        super().__init__(in_dims, out_dims,
-                                      activation, has_bias=True)
+        super().__init__(in_dims, out_dims, activation, input, has_bias=True)
 
     def backward(self, lr, optimizer=None):
         if optimizer:
-            optimizer.grad_update(self.weights)
+            optimizer.grad_update(self.weights, lr, self.input, self.w_shape)
         else:
-            self.update_grad()
+            self.update_grad(self.input)
             self.weights -= lr * self.weight_grad
             if self.has_bias:
                 self.update_grad()
                 self.bias -= lr * self.bias_grad
 
     def update_grad(self, input):
-        input = (input.reshape(input.shape[0], 1) if len(input.shape) == 1
-                                                  else input)
-        self.weight_grad = torch.mm(input, loss.grad())
+        D = self.w_shape[0]
+        stack = (input, ) * D
+        input = torch.stack(stack, dim=0)
+        grad = torch.zeros(self.w_shape, self.w_shape[-1])
+        self.weight_grad = torch.bmm(grad, input).reshape(self.w_shape)
         if self.has_bias:
-            pass
-        else:
-            pass
+           self.bias_grad = torch.zeros(self.bias.shape)
 
     def initialize(self):
         self.weight_grad = torch.randn(self.weights.shape)
