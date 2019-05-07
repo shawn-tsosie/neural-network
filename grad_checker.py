@@ -8,6 +8,8 @@ def grad_checker(function, tensor, h=1e-4, sensitivity=1e-3):
     Partial code taken from Stanford's CS224N starter code.
     """
 
+    tensor = tensor.double()
+
     fx, grad = function.activation, function.derivative
     numels = grad(tensor).numel()
 
