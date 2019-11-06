@@ -24,11 +24,11 @@ class ReLU(Activation):
 
     def __init__(self):
         super().__init__(activation=lambda x: x.clamp(min=0),
-                                         derivative=lambda x: (x > 0).float())
+                         derivative=lambda x: (x > 0).float())
 
 
-def prelu_func(tensor, a):
-    pass
+def prelu_func(tensor, alpha):
+    return x if x > 0 else alpha * x
 
 def prelu_grad(tensor, a):
     pass
@@ -66,7 +66,25 @@ def softmax_func(tensor):
     return tensor
 
 def softmax_grad(tensor):
-    pass
+    original_shape = tensor.shape
+
+    if len(tensor.shape) > 1:
+        D = tensor.shape[0]
+        tensor_max = torch.max(tensor, dim=1).reshape(D, 1)
+        softmax = tensor - tensor_max
+        softmax = torch.exp(softmax)
+        softmax /= softmax.sum(dim=1).reshape(D, 1)
+        tensor = softmax
+        tensor_grad = softmax
+    else:
+        tensor_max = torch.max(tensor)
+        softmax = tensor - tensor_max
+        softmax = torch.exp(softmax)
+        softmax /= softmax.sum()
+        tensor = softmax.reshape(tensor.shape, 1)
+        tensor_grad = tensor.diag(tensor) - tensor.matmul(tensor.t())
+
+    return tensor_grad
 
 
 class SoftMax(Activation):

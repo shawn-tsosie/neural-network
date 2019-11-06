@@ -6,6 +6,24 @@ from neural_network import *
 def grad_checker(function, tensor, h=1e-4, sensitivity=1e-3):
     """
     Partial code taken from Stanford's CS224N starter code.
+
+    The function calculates the symmetric difference quotient and checks that
+    the gradient is within the sensitivity specified.
+
+    Args:
+        function: The function whose gradient will be checked.
+        tensor: The input to the function.
+        h: In the formula:
+            $$
+            \frac{\partial f}{\partial x} = \frac{f(x + h*{\bf 1}) - f(x - h *
+            {\bf 1})}{2 * h}
+            $$
+            where $f$ denotes function and ${\bf 1}$ is the column vector
+            whose entries are all $1$.
+            The argument h is $h$ in the above formula.
+        sensitivity: Checks that the difference between the function gradient
+            evaluated at the tensor and the symmetric difference quotient are
+            within the desired sensitivity.
     """
 
     tensor = tensor.double()
